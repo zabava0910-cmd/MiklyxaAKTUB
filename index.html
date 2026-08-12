@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Miklyxa Show — Статистика</title>
     <style>
-        /* ===== ТЁМНЫЙ СТИЛЬ ===== */
+        /* ============================================================
+           TWITCH СТИЛЬ
+           ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -115,32 +117,124 @@
         .stat .growth.positive { color: #34d399; }
         .stat .growth.negative { color: #f87171; }
 
-        .connect-btn {
+        /* ============================================================
+           АДМИН-ПАНЕЛЬ
+           ============================================================ */
+        .admin-toggle {
             width: 100%;
-            padding: 14px;
-            border: none;
+            padding: 12px;
+            margin-top: 16px;
+            border: 1px solid #2a2a3e;
             border-radius: 14px;
-            font-size: 16px;
+            background: transparent;
+            color: #8a8a9a;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .admin-toggle:hover {
+            border-color: #7c3aed;
+            color: #f0ecf5;
+        }
+
+        .admin-panel {
+            margin-top: 16px;
+            padding: 20px;
+            background: #1a1a2a;
+            border-radius: 18px;
+            border: 1px solid #2a2a3e;
+            display: none;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .admin-panel .admin-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #a855f7;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        .admin-panel .input-group {
+            margin-bottom: 12px;
+        }
+
+        .admin-panel label {
+            display: block;
+            font-size: 12px;
+            color: #8a8a9a;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .admin-panel input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #2a2a3e;
+            background: #0a0a0f;
+            color: #f0ecf5;
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .admin-panel input:focus {
+            border-color: #7c3aed;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.15);
+        }
+
+        .admin-panel .save-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
             font-weight: 700;
             cursor: pointer;
             transition: 0.3s;
-            margin-top: 12px;
             background: linear-gradient(135deg, #7c3aed, #a855f7);
             color: #fff;
+            margin-top: 6px;
             box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
         }
 
-        .connect-btn:hover {
+        .admin-panel .save-btn:hover {
             transform: scale(1.02);
             box-shadow: 0 6px 30px rgba(124, 58, 237, 0.5);
         }
 
-        .connect-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+        .admin-panel .status-msg {
+            font-size: 13px;
+            text-align: center;
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 10px;
+            display: none;
         }
 
+        .admin-panel .status-msg.success {
+            display: block;
+            background: rgba(52, 211, 153, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+
+        .admin-panel .status-msg.error {
+            display: block;
+            background: rgba(248, 113, 113, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+        }
+
+        /* ============================================================
+           ДРУГОЕ
+           ============================================================ */
         .footer {
             margin-top: 20px;
             font-size: 12px;
@@ -175,16 +269,14 @@
             display: none;
         }
 
-        /* ===== ТОКЕН ПОЛУЧЕН ===== */
-        .token-status {
+        .info-text {
+            font-size: 11px;
+            color: #5a5a6a;
             text-align: center;
-            margin: 12px 0 6px;
-            font-size: 14px;
-            font-weight: 600;
+            margin-top: 12px;
+            border-top: 1px solid #1f1f35;
+            padding-top: 12px;
         }
-
-        .token-status .ok { color: #34d399; }
-        .token-status .no { color: #f87171; }
 
         @media (max-width: 480px) {
             .card { padding: 20px 16px; }
@@ -216,239 +308,45 @@
             </div>
         </div>
 
-        <!-- СТАТУС ТОКЕНА -->
-        <div class="token-status" id="tokenStatus">
-            <span class="no">🔴 Токен не получен</span>
-        </div>
+        <!-- ============================================================
+        АДМИН-ПАНЕЛЬ
+        ============================================================ -->
+        <button class="admin-toggle" id="adminToggle">🔐 Админ-панель</button>
 
-        <!-- КНОПКА ПОДКЛЮЧЕНИЯ -->
-        <button class="connect-btn" id="connectBtn">🔗 Подключить Twitch</button>
+        <div class="admin-panel" id="adminPanel">
+            <div class="admin-title">⚙️ Настройки аккаунта</div>
+
+            <div class="input-group">
+                <label for="adminLogin">👤 Логин Twitch</label>
+                <input type="text" id="adminLogin" placeholder="miklyxa_infa" />
+            </div>
+
+            <div class="input-group">
+                <label for="adminPassword">🔑 Пароль Twitch</label>
+                <input type="password" id="adminPassword" placeholder="••••••••" />
+            </div>
+
+            <div class="input-group">
+                <label for="adminCode">🔐 Код доступа к панели</label>
+                <input type="password" id="adminCode" placeholder="Введите код 1488" />
+            </div>
+
+            <button class="save-btn" id="saveAdminBtn">💾 Сохранить и обновить</button>
+
+            <div class="status-msg" id="adminStatusMsg"></div>
+        </div>
 
         <!-- ФУТЕР -->
         <div class="footer">
-            <span id="updateTime">—</span>
+            <span>🔄 обновлено: <span id="updateTime">—</span></span>
             <button class="refresh-btn" id="refreshBtn">⟳ Обновить</button>
         </div>
 
-        <div class="error" id="errorMsg">Ошибка загрузки данных</div>
+        <div class="info-text">
+            Данные с аккаунта <strong id="displayLogin">miklyxa_infa</strong> · обновление каждые 5 секунд
+        </div>
     </div>
 
     <script>
         // ============================================================
-        //  КОНФИГУРАЦИЯ
-        // ============================================================
-        const CLIENT_ID = 'kimne78kx3ncx6brgo4mv6gki99h1na'; // публичный Client-ID Twitch
-        const REDIRECT_URI = window.location.origin + window.location.pathname;
-        const SCOPE = 'user:read:follows';
-
-        // ============================================================
-        //  РАБОТА С ТОКЕНОМ
-        // ============================================================
-
-        function getTokenFromURL() {
-            const hash = window.location.hash;
-            if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
-                const token = params.get('access_token');
-                if (token) {
-                    localStorage.setItem('twitch_token', token);
-                    window.location.hash = '';
-                    return token;
-                }
-            }
-            return localStorage.getItem('twitch_token');
-        }
-
-        function getToken() {
-            return getTokenFromURL() || localStorage.getItem('twitch_token');
-        }
-
-        function setTokenStatus(hasToken) {
-            const el = document.getElementById('tokenStatus');
-            if (hasToken) {
-                el.innerHTML = '<span class="ok">🟢 Токен получен — данные обновляются</span>';
-            } else {
-                el.innerHTML = '<span class="no">🔴 Токен не получен — нажмите "Подключить Twitch"</span>';
-            }
-        }
-
-        // ============================================================
-        //  ПОДКЛЮЧЕНИЕ К TWITCH
-        // ============================================================
-
-        document.getElementById('connectBtn').addEventListener('click', () => {
-            const authUrl =
-                `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${SCOPE}`;
-            window.location.href = authUrl;
-        });
-
-        // ============================================================
-        //  ЗАПРОС ДАННЫХ
-        // ============================================================
-
-        let prevFollowers = 0;
-        let prevViewers = 0;
-
-        async function fetchTwitchData() {
-            const token = getToken();
-            if (!token) {
-                setTokenStatus(false);
-                return null;
-            }
-            setTokenStatus(true);
-
-            try {
-                // 1. Получаем ID пользователя
-                const userRes = await fetch('https://api.twitch.tv/helix/users?login=miklyxa_infa', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Client-ID': CLIENT_ID
-                    }
-                });
-                if (!userRes.ok) throw new Error(`HTTP ${userRes.status}`);
-                const userData = await userRes.json();
-                const userId = userData.data?.[0]?.id;
-                if (!userId) throw new Error('Пользователь не найден');
-
-                // 2. Получаем фолловеров
-                const followRes = await fetch(`https://api.twitch.tv/helix/users/follows?to_id=${userId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Client-ID': CLIENT_ID
-                    }
-                });
-                if (!followRes.ok) throw new Error(`HTTP ${followRes.status}`);
-                const followData = await followRes.json();
-                const followers = followData.total || 0;
-
-                // 3. Получаем зрителей (и статус стрима)
-                const streamRes = await fetch('https://api.twitch.tv/helix/streams?user_login=miklyxa_infa', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Client-ID': CLIENT_ID
-                    }
-                });
-                if (!streamRes.ok) throw new Error(`HTTP ${streamRes.status}`);
-                const streamData = await streamRes.json();
-                const stream = streamData.data?.[0];
-                const viewers = stream ? stream.viewer_count : 0;
-                const isLive = !!stream;
-                const game = stream ? stream.game_name : 'Не в эфире';
-
-                return { followers, viewers, isLive, game };
-
-            } catch (e) {
-                console.error('❌ Ошибка:', e);
-                document.getElementById('errorMsg').style.display = 'block';
-                document.getElementById('errorMsg').textContent = `Ошибка: ${e.message}`;
-                return null;
-            }
-        }
-
-        // ============================================================
-        //  ОТОБРАЖЕНИЕ
-        // ============================================================
-
-        function updateUI(data) {
-            if (!data) return;
-
-            const { followers, viewers, isLive, game } = data;
-
-            // Фолловеры
-            const fEl = document.getElementById('followers');
-            const fGrowth = document.getElementById('followersGrowth');
-            if (fEl) {
-                fEl.textContent = followers.toLocaleString('ru-RU');
-                const diff = followers - prevFollowers;
-                if (diff > 0) {
-                    fGrowth.textContent = `↑ +${diff}`;
-                    fGrowth.className = 'growth positive';
-                } else if (diff < 0) {
-                    fGrowth.textContent = `↓ ${diff}`;
-                    fGrowth.className = 'growth negative';
-                } else {
-                    fGrowth.textContent = '→ 0';
-                    fGrowth.className = 'growth';
-                }
-                prevFollowers = followers;
-            }
-
-            // Зрители
-            const vEl = document.getElementById('viewers');
-            const vGrowth = document.getElementById('viewersGrowth');
-            if (vEl) {
-                vEl.textContent = viewers.toLocaleString('ru-RU');
-                const diff = viewers - prevViewers;
-                if (diff > 0) {
-                    vGrowth.textContent = `↑ +${diff}`;
-                    vGrowth.className = 'growth positive';
-                } else if (diff < 0) {
-                    vGrowth.textContent = `↓ ${diff}`;
-                    vGrowth.className = 'growth negative';
-                } else {
-                    vGrowth.textContent = '→ 0';
-                    vGrowth.className = 'growth';
-                }
-                prevViewers = viewers;
-            }
-
-            // LIVE-бейдж
-            const badge = document.getElementById('liveBadge');
-            if (isLive) {
-                badge.textContent = '🔴 LIVE';
-                badge.className = 'badge live';
-            } else {
-                badge.textContent = '⏹ OFFLINE';
-                badge.className = 'badge';
-            }
-
-            // Время
-            const now = new Date();
-            document.getElementById('updateTime').textContent =
-                now.getHours().toString().padStart(2, '0') + ':' +
-                now.getMinutes().toString().padStart(2, '0') + ':' +
-                now.getSeconds().toString().padStart(2, '0');
-
-            // Скрываем ошибку
-            document.getElementById('errorMsg').style.display = 'none';
-        }
-
-        // ============================================================
-        //  ОБНОВЛЕНИЕ
-        // ============================================================
-
-        async function refresh() {
-            const btn = document.getElementById('refreshBtn');
-            btn.textContent = '⟳ ...';
-            btn.disabled = true;
-
-            const data = await fetchTwitchData();
-            if (data) {
-                updateUI(data);
-            }
-
-            btn.textContent = '⟳ Обновить';
-            btn.disabled = false;
-        }
-
-        // ============================================================
-        //  ЗАПУСК
-        // ============================================================
-
-        // Проверяем токен в URL при загрузке
-        getTokenFromURL();
-
-        // Если токен есть — запускаем обновление
-        if (getToken()) {
-            setTokenStatus(true);
-            refresh();
-            setInterval(refresh, 3000);
-        } else {
-            setTokenStatus(false);
-        }
-
-        document.getElementById('refreshBtn').addEventListener('click', refresh);
-    </script>
-
-</body>
-</html>
+        //  КОНФИГУ
