@@ -128,17 +128,19 @@
         }
 
         .admin-toggle button {
-            background: none;
-            border: 1px solid #2a2a3e;
-            color: #8a8a9a;
-            padding: 8px 20px;
+            background: #2a2a3e;
+            border: 1px solid #3a3a4e;
+            color: #c0c0d0;
+            padding: 10px 24px;
             border-radius: 30px;
-            font-size: 13px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             transition: 0.3s;
         }
 
         .admin-toggle button:hover {
+            background: #3a3a4e;
             border-color: #7c3aed;
             color: #f0ecf5;
         }
@@ -356,10 +358,20 @@
         const adminToggleBtn = document.getElementById('adminToggleBtn');
         const adminPanel = document.getElementById('adminPanel');
 
-        adminToggleBtn.addEventListener('click', function() {
-            const isOpen = adminPanel.classList.toggle('open');
-            this.textContent = isOpen ? '❌ Закрыть админку' : '🔐 Админ-панель';
-        });
+        // Проверяем, что элементы существуют
+        console.log('🔐 adminToggleBtn:', adminToggleBtn);
+        console.log('🔐 adminPanel:', adminPanel);
+
+        if (adminToggleBtn) {
+            adminToggleBtn.addEventListener('click', function() {
+                console.log('🔐 Кнопка нажата!');
+                const isOpen = adminPanel.classList.toggle('open');
+                this.textContent = isOpen ? '❌ Закрыть админку' : '🔐 Админ-панель';
+                console.log('🔐 Панель открыта:', isOpen);
+            });
+        } else {
+            console.error('❌ Кнопка adminToggleBtn не найдена!');
+        }
 
         // ============================================================
         //  СОХРАНЕНИЕ И ОБНОВЛЕНИЕ
@@ -379,28 +391,32 @@
             adminCode.value = saved.code;
         }
 
-        saveAdminBtn.addEventListener('click', function() {
-            const login = adminLogin.value.trim();
-            const password = adminPassword.value.trim();
-            const code = adminCode.value.trim();
+        if (saveAdminBtn) {
+            saveAdminBtn.addEventListener('click', function() {
+                const login = adminLogin.value.trim();
+                const password = adminPassword.value.trim();
+                const code = adminCode.value.trim();
 
-            if (!login) {
-                adminStatusMsg.textContent = '❌ Введите логин!';
-                adminStatusMsg.className = 'status-msg error';
-                return;
-            }
+                if (!login) {
+                    adminStatusMsg.textContent = '❌ Введите логин!';
+                    adminStatusMsg.className = 'status-msg error';
+                    return;
+                }
 
-            const ok = saveAdminData(login, password, code);
-            if (ok) {
-                adminStatusMsg.textContent = '✅ Данные сохранены!';
-                adminStatusMsg.className = 'status-msg success';
-                // Автоматически обновляем статистику
-                refresh();
-            } else {
-                adminStatusMsg.textContent = '❌ Ошибка сохранения!';
-                adminStatusMsg.className = 'status-msg error';
-            }
-        });
+                const ok = saveAdminData(login, password, code);
+                if (ok) {
+                    adminStatusMsg.textContent = '✅ Данные сохранены!';
+                    adminStatusMsg.className = 'status-msg success';
+                    // Автоматически обновляем статистику
+                    refresh();
+                } else {
+                    adminStatusMsg.textContent = '❌ Ошибка сохранения!';
+                    adminStatusMsg.className = 'status-msg error';
+                }
+            });
+        } else {
+            console.error('❌ Кнопка saveAdminBtn не найдена!');
+        }
 
         // ============================================================
         //  TWITCH API — ЗАПРОС ДАННЫХ
@@ -536,6 +552,9 @@
         }
 
         document.getElementById('refreshBtn').addEventListener('click', refresh);
+
+        console.log('✅ Сайт загружен!');
+        console.log('📦 Сохранённые данные:', saved);
     </script>
 
 </body>
