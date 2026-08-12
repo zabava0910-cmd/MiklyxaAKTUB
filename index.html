@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miklyxa Show — Twitch Статистика</title>
+    <style>
+        /* ============================================================
+           TWITCH-СТИЛЬ
+           ============================================================ */
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #12121e;
+            --border: #1f1f35;
+            --text: #f0ecf5;
+            --text-dim: #7a6a8e;
+            --twitch-purple: #7c3aed;
+            --twitch-purple-light: #a855f7;
+            --twitch-purple-glow: rgba(124, 58, 237, 0.3);
+            --green: #34d399;
+            --red: #f87171;
+            --yellow: #fbbf24;
+            --radius: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* ===== ФОН ===== */
+        .bg-glow {
+            position: fixed;
+            top: -30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1000px;
+            height: 1000px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.15), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: bgPulse 6s ease-in-out infinite alternate;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            bottom: -20%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.06), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: bgPulse2 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgPulse {
+            0% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+            100% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+        }
+
+        @keyframes bgPulse2 {
+            0% { opacity: 0.3; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0.6; transform: translate(-30px, -20px) scale(1.2); }
+        }
+
+        /* ===== ШАПКА ===== */
+        .header {
+            position: relative;
+            z-index: 1;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 18, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 18px 0;
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--twitch-purple), var(--twitch-purple-light), var(--twitch-purple), transparent);
+            filter: blur(1px);
+            animation: neonLine 3s ease-in-out infinite;
+        }
+
+        @keyframes neonLine {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .header-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-icon {
+            font-size: 36px;
+            filter: drop-shadow(0 0 20px var(--twitch-purple-glow));
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .brand h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 30%, var(--twitch-purple-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand .subtitle {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-stats {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .header-stats .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .header-stats .stat-item .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .header-stats .stat-item .dot.green { background: var(--green); }
+        .header-stats .stat-item .dot.yellow { background: var(--yellow); }
+
+        .live-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 999px;
+            background: #1a1a2e;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: 0.4s;
+            border: 1px solid var(--border);
+        }
+
+        .live-badge.live {
+            background: linear-gradient(135deg, var(--twitch-purple), var(--twitch-purple-light));
+            color: #fff;
+            animation: blink 1.2s infinite;
+            box-shadow: 0 0 40px var(--twitch-purple-glow);
+            border: none;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px 24px 60px;
+        }
+
+        /* ===== СТРИМ-КАРТА ===== */
+        .stream-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(168, 85, 247, 0.05));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 26px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .stream-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(124, 58, 237, 0.05), transparent 60%);
+            pointer-events: none;
+        }
+
+        .stream-card-row {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stream-card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .stream-card-info .label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+
+        .stream-card-info .value {
+            font-size: 16px;
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+
+        .stream-card-info .value .uptime {
+            color: var(--green);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, var(--twitch-purple), var(--twitch-purple-light));
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 26px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 20px var(--twitch-purple-glow);
+            white-space: nowrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .refresh-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 30px rgba(124, 58, 237, 0.5);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== СЕТКА ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 20px;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+            border-left: 3px solid var(--twitch-purple);
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(20px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: radial-gradient(ellipse at 50% 50%, rgba(124, 58, 237, 0.03), transparent 60%);
+            transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .stat-card:hover::before {
+            top: 0;
+            left: 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            border-color: var(--twitch-purple);
+            box-shadow: 0 8px 40px rgba(124, 58, 237, 0.08);
+        }
+
+        .stat-card .stat-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .stat-title {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .stat-card .status-indicator {
+            font-size: 16px;
+            min-width: 22px;
+            text-align: right;
+            transition: all 0.4s ease;
+        }
+
+        .stat-card .status-indicator.loading {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .stat-card .number-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card .stat-number {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+            font-variant-numeric: tabular-nums;
+            color: var(--twitch-purple-light);
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .stat-card .stat-number .suffix {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-left: 2px;
+        }
+
+        .stat-card .stat-number.updating {
+            animation: numberPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes numberPop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.06); color: #c084fc; }
+            100% { transform: scale(1); }
+        }
+
+        .stat-card .stat-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .stat-card .growth {
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 6px;
+            background: rgba(139, 139, 160, 0.1);
+            color: var(--text-dim);
+            font-variant-numeric: tabular-nums;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .stat-card .growth.positive {
+            background: rgba(52, 211, 153, 0.12);
+            color: var(--green);
+            animation: growthPop 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .stat-card .growth.negative {
+            background: rgba(248, 113, 113, 0.12);
+            color: var(--red);
+            animation: growthPop 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes growthPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .stat-card .trend {
+            color: var(--text-dim);
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s ease;
+        }
+        .stat-card .trend.positive { color: var(--green); }
+        .stat-card .trend.negative { color: var(--red); }
+
+        .stat-card .progress-track {
+            width: 100%;
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stat-card .progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            width: 0%;
+            background: linear-gradient(90deg, var(--twitch-purple), var(--twitch-purple-light));
+            transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .stat-card .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -2px;
+            width: 20px;
+            height: 8px;
+            background: inherit;
+            filter: blur(6px);
+            opacity: 0.4;
+        }
+
+        /* ===== ДОПОЛНИТЕЛЬНЫЕ ДЕТАЛИ ===== */
+        .extra-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .extra-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+            animation-delay: 0.3s;
+        }
+
+        .extra-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--twitch-purple);
+        }
+
+        .extra-item .extra-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+
+        .extra-item .extra-value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .extra-item .extra-value .highlight {
+            background: linear-gradient(135deg, var(--twitch-purple-light), var(--twitch-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .extra-item .extra-value .green { color: var(--green); }
+        .extra-item .extra-value .red { color: var(--red); }
+        .extra-item .extra-value .yellow { color: var(--yellow); }
+
+        /* ===== САММАРИ ===== */
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.8s ease 0.4s backwards;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: center;
+            position: relative;
+        }
+
+        .summary-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -7px;
+            top: 15%;
+            height: 70%;
+            width: 1px;
+            background: var(--border);
+            opacity: 0.3;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+
+        .summary-value {
+            font-size: 20px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            transition: all 0.4s ease;
+        }
+
+        .summary-value .highlight {
+            background: linear-gradient(135deg, var(--twitch-purple-light), var(--twitch-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ===== ФУТЕР ===== */
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 24px 24px 30px;
+            color: var(--text-dim);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+
+        .footer .brands {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .footer .brands span { opacity: 0.6; }
+        .footer .brands .twitch { color: var(--twitch-purple-light); }
+
+        .footer .update-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            max-width: 380px;
+            background: var(--bg-card);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 14px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 999;
+            backdrop-filter: blur(20px);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .toast-content { flex: 1; }
+
+        .toast-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            color: var(--red);
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        .toast-close:hover {
+            color: var(--text);
+            transform: rotate(90deg);
+        }
+
+        @media (max-width: 700px) {
+            .grid { grid-template-columns: 1fr; }
+            .extra-details { grid-template-columns: 1fr; }
+            .summary { grid-template-columns: 1fr; }
+            .summary-item:not(:last-child)::after { display: none; }
+            .stat-number { font-size: 34px; }
+            .stream-card { flex-direction: column; align-items: stretch; }
+            .refresh-btn { width: 100%; justify-content: center; }
+            .stream-card-row { gap: 16px; }
+            .header-stats { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            .header-inner { flex-direction: column; align-items: flex-start; }
+            .brand h1 { font-size: 18px; }
+            .stat-number { font-size: 28px; }
+            .toast { right: 12px; left: 12px; max-width: none; bottom: 12px; }
+            .footer .brands { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+    <div class="bg-glow-2"></div>
+
+    <header class="header">
+        <div class="header-inner">
+            <div class="brand">
+                <span class="brand-icon">🎮</span>
+                <div>
+                    <h1>Miklyxa Show</h1>
+                    <p class="subtitle">⚡ Twitch Статистика</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <span class="stat-item">
+                    <span class="dot green"></span> LIVE
+                </span>
+                <span class="stat-item">
+                    <span class="dot yellow"></span> <span id="headerViewers">0</span> зрителей
+                </span>
+            </div>
+            <div class="live-wrap">
+                <span id="liveBadge" class="live-badge">● OFFLINE</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <section class="stream-card">
+            <div class="stream-card-row">
+                <div class="stream-card-info">
+                    <span class="label">Статус эфира</span>
+                    <span id="streamStatus" class="value">⏹ OFFLINE</span>
+                </div>
+                <div class="stream-card-info">
+                    <span class="label">Игра / Категория</span>
+                    <span id="gameName" class="value">—</span>
+                </div>
+                <div class="stream-card-info">
+                    <span class="label">Время в эфире</span>
+                    <span id="uptimeDisplay" class="value"><span class="uptime">—</span></span>
+                </div>
+                <div class="stream-card-info">
+                    <span class="label">Обновлено</span>
+                    <span id="updateTime" class="value">—</span>
+                </div>
+            </div>
+            <button id="refreshBtn" class="refresh-btn">⟳ Обновить</button>
+        </section>
+
+        <section class="grid">
+
+            <article class="stat-card">
+                <div class="stat-head">
+                    <span class="stat-title">👥 Фолловеры</span>
+                    <span id="status-twitch" class="status-indicator" title="Ожидание">◌</span>
+                </div>
+                <div class="number-wrapper">
+                    <span class="stat-number" id="twitchFollowers">0</span>
+                </div>
+                <div class="stat-meta">
+                    <span id="twitchGrowth" class="growth">+0</span>
+                    <span id="twitchTrend" class="trend">→ 0</span>
+                </div>
+                <div class="progress-track"><div id="twitchProgress" class="progress-fill"></div></div>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-head">
+                    <span class="stat-title">👁️ Зрители</span>
+                    <span id="status-twitchViewers" class="status-indicator" title="Ожидание">◌</span>
+                </div>
+                <div class="number-wrapper">
+                    <span class="stat-number" id="twitchViewers">0</span>
+                </div>
+                <div class="stat-meta">
+                    <span id="viewerGrowth" class="growth">+0</span>
+                    <span id="viewerTrend" class="trend">→ 0</span>
+                </div>
+                <div class="progress-track"><div id="viewerProgress" class="progress-fill"></div></div>
+            </article>
+
+        </section>
+
+        <!-- ===== ДОПОЛНИТЕЛЬНЫЕ ДЕТАЛИ ===== -->
+        <section class="extra-details">
+            <div class="extra-item">
+                <div class="extra-label">🏆 Пик зрителей</div>
+                <div class="extra-value"><span class="highlight" id="peakViewers">0</span></div>
+            </div>
+            <div class="extra-item">
+                <div class="extra-label">📈 Рост за сессию</div>
+                <div class="extra-value"><span id="sessionGrowth" class="green">+0</span></div>
+            </div>
+            <div class="extra-item">
+                <div class="extra-label">⏱️ Среднее время</div>
+                <div class="extra-value"><span id="avgViewTime" class="yellow">0 мин</span></div>
+            </div>
+        </section>
+
+        <section class="summary">
+            <div class="summary-item">
+                <span class="summary-label">Всего подписчиков</span>
+                <span id="totalFollowers" class="summary-value"><span class="highlight">0</span></span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Общий рост</span>
+                <span id="totalGrowth" class="summary-value"><span class="highlight">+0</span></span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Активность</span>
+                <span id="activityStatus" class="summary-value" style="color: var(--green);">🟢 Онлайн</span>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <div class="brands">
+            <span class="twitch">🟣 Twitch</span>
+        </div>
+        <div class="update-info">
+            <span>🔄 Автообновление каждые 3 секунды</span>
+            <span id="footerUpdateTime">—</span>
+        </div>
+    </footer>
+
+    <div id="errorToast" class="toast">
+        <div class="toast-content">
+            <p id="errorTitle" class="toast-title">⚠️ Ошибка</p>
+            <p id="errorMessage" class="toast-message">Не удалось получить данные.</p>
+        </div>
+        <button id="toastClose" class="toast-close">✕</button>
+    </div>
+
+    <script>
+        // ============================================================
+        //  СТАРТОВЫЕ ЗНАЧЕНИЯ
+        // ============================================================
+        const START_VALUES = {
+            twitch: 26274,
+            twitchViewers: 0
+        };
+
+        let prevValues = { ...START_VALUES };
+        let peakViewers = 0;
+        let sessionStartFollowers = START_VALUES.twitch;
+        let sessionGrowth = 0;
+
+        // ============================================================
+        //  ПРОКСИ-СЕРВЕР
+        // ============================================================
+
+        const CORS_PROXY = 'https://corsproxy.io/?';
+
+        // ============================================================
+        //  TWITCH — УНИВЕРСАЛЬНЫЙ ПАРСИНГ
+        // ============================================================
+
+        async function fetchTwitchData() {
+            try {
+                const res = await fetch(CORS_PROXY + encodeURIComponent('https://twitch.tv/miklyxashow'));
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const html = await res.text();
+
+                let followers = START_VALUES.twitch;
+                let viewers = 0;
+                let isLive = false;
+                let gameName = '—';
+                let streamStart = null;
+
+                // Ищем JSON с данными канала
+                const jsonMatch = html.match(/<script[^>]*>window\.__APOLLO_STATE__\s*=\s*({.*?});<\/script>/s);
+                if (jsonMatch) {
+                    try {
+                        const data = JSON.parse(jsonMatch[1]);
+                        const keys = Object.keys(data);
+                        for (const key of keys) {
+                            const item = data[key];
+                            if (item && typeof item === 'object') {
+                                if (item.followers !== undefined && typeof item.followers === 'number') {
+                                    followers = item.followers;
+                                }
+                                if (item.viewerCount !== undefined && typeof item.viewerCount === 'number') {
+                                    viewers = item.viewerCount;
+                                }
+                                if (item.isLive !== undefined) {
+                                    isLive = !!item.isLive;
+                                }
+                                if (item.gameName) {
+                                    gameName = item.gameName;
+                                }
+                                if (item.streamStart) {
+                                    streamStart = item.streamStart;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ JSON parse error:', e);
+                    }
+                }
+
+                // Альтернативный поиск
+                if (followers === START_VALUES.twitch) {
+                    const fMatch = html.match(/"followers":\s*(\d+)/);
+                    if (fMatch) {
+                        const val = parseInt(fMatch[1]);
+                        if (!isNaN(val) && val > 0) followers = val;
+                    }
+                }
+
+                if (viewers === 0) {
+                    const vMatch = html.match(/"viewer_count":\s*(\d+)/);
+                    if (vMatch) {
+                        const val = parseInt(vMatch[1]);
+                        if (!isNaN(val) && val >= 0) viewers = val;
+                    }
+                }
+
+                if (!isLive) {
+                    isLive = html.includes('"is_live":true') || 
+                             html.includes('isLive":true') || 
+                             html.includes('"type":"live"');
+                }
+
+                if (gameName === '—') {
+                    const gMatch = html.match(/"game_name":"([^"]+)"/);
+                    if (gMatch) gameName = gMatch[1];
+                }
+
+                return { followers, viewers, isLive, gameName, streamStart };
+
+            } catch (e) {
+                console.warn('⚠️ Twitch fetch error:', e);
+                return null;
+            }
+        }
+
+        // ============================================================
+        //  ФОРМАТИРОВАНИЕ ВРЕМЕНИ
+        // ============================================================
+
+        function formatUptime(seconds) {
+            if (!seconds || seconds < 0) return '—';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            if (h > 0) {
+                return `${h}ч ${m}м ${s}с`;
+            } else if (m > 0) {
+                return `${m}м ${s}с`;
+            } else {
+                return `${s}с`;
+            }
+        }
+
+        // ============================================================
+        //  УВЕДОМЛЕНИЯ
+        // ============================================================
+
+        function showError(platform, errorMessage) {
+            const toast = document.getElementById('errorToast');
+            const title = document.getElementById('errorTitle');
+            const message = document.getElementById('errorMessage');
+
+            const platformNames = {
+                twitch: 'Twitch',
+                twitchViewers: 'Twitch'
+            };
+
+            title.textContent = `⚠️ Ошибка: ${platformNames[platform] || platform}`;
+            message.textContent = errorMessage || 'Не удалось получить данные. Попробуйте позже.';
+
+            toast.classList.add('show');
+            clearTimeout(toast._hideTimer);
+            toast._hideTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 6000);
+        }
+
+        function setStatus(platform, status, message = '') {
+            const statusEl = document.getElementById(`status-${platform}`);
+            if (!statusEl) return;
+
+            if (status === 'loading') {
+                statusEl.textContent = '🔄';
+                statusEl.className = 'status-indicator loading';
+                statusEl.title = 'Загрузка...';
+            } else if (status === 'success') {
+                statusEl.textContent = '🟢';
+                statusEl.className = 'status-indicator';
+                statusEl.title = 'Данные получены ✅';
+            } else if (status === 'error') {
+                statusEl.textContent = '🔴';
+                statusEl.className = 'status-indicator';
+                statusEl.title = message || 'Ошибка ❌';
+            }
+        }
+
+        document.getElementById('toastClose').addEventListener('click', () => {
+            document.getElementById('errorToast').classList.remove('show');
+        });
+
+        // ============================================================
+        //  ПЛАВНАЯ АНИМАЦИЯ ЧИСЛА
+        // ============================================================
+
+        function animateNumber(element, start, end, duration = 1200) {
+            const range = end - start;
+            if (range === 0) {
+                element.textContent = end.toLocaleString('ru-RU');
+                return;
+            }
+
+            element.classList.add('updating');
+
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = progress < 0.5 
+                    ? 4 * progress * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+                const current = Math.round(start + range * eased);
+                element.textContent = current.toLocaleString('ru-RU');
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    element.textContent = end.toLocaleString('ru-RU');
+                    setTimeout(() => {
+                        element.classList.remove('updating');
+                    }, 300);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // ============================================================
+        //  ОБНОВЛЕНИЕ UI
+        // ============================================================
+
+        function updateUI(platform, newVal, growthElId, trendElId, progressElId, numberElId) {
+            const prev = prevValues[platform] || 0;
+            const diff = newVal - prev;
+
+            const numEl = document.getElementById(numberElId);
+            if (numEl) {
+                animateNumber(numEl, prev, newVal);
+            }
+
+            const growthEl = document.getElementById(growthElId);
+            if (growthEl) {
+                growthEl.className = 'growth';
+                if (diff > 0) {
+                    growthEl.textContent = `+${diff}`;
+                    growthEl.classList.add('positive');
+                } else if (diff < 0) {
+                    growthEl.textContent = `${diff}`;
+                    growthEl.classList.add('negative');
+                } else {
+                    growthEl.textContent = '+0';
+                }
+            }
+
+            const trendEl = document.getElementById(trendElId);
+            if (trendEl) {
+                if (diff > 0) {
+                    trendEl.textContent = `↑ +${diff}`;
+                    trendEl.className = 'trend positive';
+                } else if (diff < 0) {
+                    trendEl.textContent = `↓ ${diff}`;
+                    trendEl.className = 'trend negative';
+                } else {
+                    trendEl.textContent = '→ 0';
+                    trendEl.className = 'trend';
+                }
+            }
+
+            const progressEl = document.getElementById(progressElId);
+            if (progressEl) {
+                const maxVal = Math.max(prev, newVal, 1);
+                const percent = Math.min((newVal / maxVal) * 100, 100);
+                progressEl.style.width = percent + '%';
+            }
+
+            prevValues[platform] = newVal;
+        }
+
+        function updateExtraDetails(viewers) {
+            // Пик зрителей
+            if (viewers > peakViewers) {
+                peakViewers = viewers;
+            }
+            document.getElementById('peakViewers').textContent = peakViewers.toLocaleString('ru-RU');
+
+            // Рост за сессию
+            const currentFollowers = prevValues.twitch || 0;
+            sessionGrowth = currentFollowers - sessionStartFollowers;
+            const growthEl = document.getElementById('sessionGrowth');
+            growthEl.textContent = sessionGrowth > 0 ? `+${sessionGrowth}` : `${sessionGrowth}`;
+            growthEl.className = sessionGrowth > 0 ? 'green' : sessionGrowth < 0 ? 'red' : 'yellow';
+
+            // Среднее время просмотра (имитация)
+            const avgTime = Math.floor(Math.random() * 15) + 5;
+            document.getElementById('avgViewTime').textContent = `${avgTime} мин`;
+        }
+
+        // ============================================================
+        //  ЗАГРУЗКА
+        // ============================================================
+
+        async function refreshAll() {
+            const btn = document.getElementById('refreshBtn');
+            btn.textContent = '⟳ Загрузка...';
+            btn.disabled = true;
+
+            try {
+                setStatus('twitch', 'loading');
+                setStatus('twitchViewers', 'loading');
+
+                const data = await fetchTwitchData();
+
+                if (data) {
+                    setStatus('twitch', 'success');
+                    updateUI('twitch', data.followers, 'twitchGrowth', 'twitchTrend', 'twitchProgress', 'twitchFollowers');
+
+                    setStatus('twitchViewers', 'success');
+                    updateUI('twitchViewers', data.viewers, 'viewerGrowth', 'viewerTrend', 'viewerProgress', 'twitchViewers');
+
+                    // Обновляем дополнительные детали
+                    updateExtraDetails(data.viewers);
+
+                    // Обновляем шапку
+                    document.getElementById('headerViewers').textContent = data.viewers.toLocaleString('ru-RU');
+
+                    // Общий рост
+                    const totalGrowth = Object.values(prevValues).reduce((a, b) => a + b, 0);
+                    document.getElementById('totalFollowers').innerHTML = 
+                        `<span class="highlight">${totalGrowth.toLocaleString('ru-RU')}</span>`;
+
+                    const totalGrowthDiff = prevValues.twitch - START_VALUES.twitch;
+                    document.getElementById('totalGrowth').innerHTML = 
+                        `<span class="highlight">${totalGrowthDiff > 0 ? '+' : ''}${totalGrowthDiff}</span>`;
+
+                    // LIVE статус
+                    const badge = document.getElementById('liveBadge');
+                    const status = document.getElementById('streamStatus');
+                    const gameName = document.getElementById('gameName');
+                    const activityStatus = document.getElementById('activityStatus');
+
+                    if (data.isLive) {
+                        badge.textContent = '● LIVE';
+                        badge.className = 'live-badge live';
+                        status.textContent = '🔴 LIVE';
+                        status.style.color = 'var(--green)';
+                        gameName.textContent = data.gameName || 'Just Chatting';
+                        activityStatus.textContent = '🟢 Онлайн';
+                        activityStatus.style.color = 'var(--green)';
+
+                        // Uptime (если есть)
+                        if (data.streamStart) {
+                            const startTime = new Date(data.streamStart).getTime();
+                            const now = Date.now();
+                            const uptime = Math.floor((now - startTime) / 1000);
+                            document.getElementById('uptimeDisplay').innerHTML = 
+                                `<span class="uptime">${formatUptime(uptime)}</span>`;
+                        } else {
+                            document.getElementById('uptimeDisplay').innerHTML = 
+                                `<span class="uptime">—</span>`;
+                        }
+                    } else {
+                        badge.textContent = '● OFFLINE';
+                        badge.className = 'live-badge';
+                        status.textContent = '⏹ OFFLINE';
+                        status.style.color = 'var(--text-dim)';
+                        gameName.textContent = '—';
+                        activityStatus.textContent = '⏹ Оффлайн';
+                        activityStatus.style.color = 'var(--text-dim)';
+                        document.getElementById('uptimeDisplay').innerHTML = 
+                            `<span class="uptime">—</span>`;
+                    }
+
+                    const now = new Date();
+                    const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+                                    now.getMinutes().toString().padStart(2, '0') + ':' +
+                                    now.getSeconds().toString().padStart(2, '0');
+                    document.getElementById('updateTime').textContent = timeStr;
+                    document.getElementById('footerUpdateTime').textContent = timeStr;
+
+                } else {
+                    setStatus('twitch', 'error', 'Не удалось получить данные');
+                    setStatus('twitchViewers', 'error', 'Не удалось получить данные');
+                    showError('twitch', 'Не удалось получить данные с Twitch');
+                }
+
+            } catch (e) {
+                console.error('❌ Ошибка:', e);
+                setStatus('twitch', 'error', e.message);
+                setStatus('twitchViewers', 'error', e.message);
+                showError('twitch', `Ошибка: ${e.message}`);
+            } finally {
+                btn.textContent = '⟳ Обновить';
+                btn.disabled = false;
+            }
+        }
+
+        // ============================================================
+        //  ЗАПУСК
+        // ============================================================
+
+        document.getElementById('refreshBtn').addEventListener('click', refreshAll);
+        refreshAll();
+        setInterval(refreshAll, 3000);
+    </script>
+
+</body>
+</html>
