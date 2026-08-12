@@ -6,7 +6,7 @@
     <title>Miklyxa Show — Статистика</title>
     <style>
         /* ============================================================
-           TWITCH СТИЛЬ
+           БАЗА
            ============================================================ */
         * {
             margin: 0;
@@ -40,6 +40,7 @@
             border-color: #7c3aed;
         }
 
+        /* ===== ШАПКА ===== */
         .header {
             display: flex;
             align-items: center;
@@ -75,6 +76,7 @@
             50% { opacity: 0.5; }
         }
 
+        /* ===== СТАТИСТИКА ===== */
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -121,26 +123,28 @@
            АДМИН-ПАНЕЛЬ
            ============================================================ */
         .admin-toggle {
-            width: 100%;
-            padding: 12px;
             margin-top: 16px;
+            text-align: center;
+        }
+
+        .admin-toggle button {
+            background: none;
             border: 1px solid #2a2a3e;
-            border-radius: 14px;
-            background: transparent;
             color: #8a8a9a;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 13px;
             cursor: pointer;
             transition: 0.3s;
         }
 
-        .admin-toggle:hover {
+        .admin-toggle button:hover {
             border-color: #7c3aed;
             color: #f0ecf5;
         }
 
         .admin-panel {
-            margin-top: 16px;
+            margin-top: 18px;
             padding: 20px;
             background: #1a1a2a;
             border-radius: 18px;
@@ -148,26 +152,23 @@
             display: none;
         }
 
-        .admin-panel.active {
+        .admin-panel.open {
             display: block;
         }
 
         .admin-panel .admin-title {
             font-size: 14px;
             font-weight: 700;
-            color: #a855f7;
             margin-bottom: 14px;
+            color: #a855f7;
             text-align: center;
-        }
-
-        .admin-panel .input-group {
-            margin-bottom: 12px;
         }
 
         .admin-panel label {
             display: block;
             font-size: 12px;
             color: #8a8a9a;
+            margin-top: 12px;
             margin-bottom: 4px;
             font-weight: 600;
         }
@@ -186,55 +187,39 @@
 
         .admin-panel input:focus {
             border-color: #7c3aed;
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.15);
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.1);
         }
 
         .admin-panel .save-btn {
             width: 100%;
             padding: 12px;
+            margin-top: 18px;
             border: none;
             border-radius: 12px;
-            font-size: 15px;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: #fff;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             transition: 0.3s;
-            background: linear-gradient(135deg, #7c3aed, #a855f7);
-            color: #fff;
-            margin-top: 6px;
-            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
         }
 
         .admin-panel .save-btn:hover {
             transform: scale(1.02);
-            box-shadow: 0 6px 30px rgba(124, 58, 237, 0.5);
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
         }
 
         .admin-panel .status-msg {
-            font-size: 13px;
-            text-align: center;
             margin-top: 10px;
-            padding: 8px;
-            border-radius: 10px;
-            display: none;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
         }
 
-        .admin-panel .status-msg.success {
-            display: block;
-            background: rgba(52, 211, 153, 0.1);
-            color: #34d399;
-            border: 1px solid rgba(52, 211, 153, 0.2);
-        }
+        .admin-panel .status-msg.success { color: #34d399; }
+        .admin-panel .status-msg.error { color: #f87171; }
 
-        .admin-panel .status-msg.error {
-            display: block;
-            background: rgba(248, 113, 113, 0.1);
-            color: #f87171;
-            border: 1px solid rgba(248, 113, 113, 0.2);
-        }
-
-        /* ============================================================
-           ДРУГОЕ
-           ============================================================ */
+        /* ===== ФУТЕР ===== */
         .footer {
             margin-top: 20px;
             font-size: 12px;
@@ -269,15 +254,6 @@
             display: none;
         }
 
-        .info-text {
-            font-size: 11px;
-            color: #5a5a6a;
-            text-align: center;
-            margin-top: 12px;
-            border-top: 1px solid #1f1f35;
-            padding-top: 12px;
-        }
-
         @media (max-width: 480px) {
             .card { padding: 20px 16px; }
             .stat .number { font-size: 28px; }
@@ -308,33 +284,8 @@
             </div>
         </div>
 
-        <!-- ============================================================
-        АДМИН-ПАНЕЛЬ
-        ============================================================ -->
-        <button class="admin-toggle" id="adminToggle">🔐 Админ-панель</button>
-
-        <div class="admin-panel" id="adminPanel">
-            <div class="admin-title">⚙️ Настройки аккаунта</div>
-
-            <div class="input-group">
-                <label for="adminLogin">👤 Логин Twitch</label>
-                <input type="text" id="adminLogin" placeholder="miklyxa_infa" />
-            </div>
-
-            <div class="input-group">
-                <label for="adminPassword">🔑 Пароль Twitch</label>
-                <input type="password" id="adminPassword" placeholder="••••••••" />
-            </div>
-
-            <div class="input-group">
-                <label for="adminCode">🔐 Код доступа к панели</label>
-                <input type="password" id="adminCode" placeholder="Введите код 1488" />
-            </div>
-
-            <button class="save-btn" id="saveAdminBtn">💾 Сохранить и обновить</button>
-
-            <div class="status-msg" id="adminStatusMsg"></div>
-        </div>
+        <!-- ОШИБКА -->
+        <div class="error" id="errorMsg">Ошибка загрузки данных</div>
 
         <!-- ФУТЕР -->
         <div class="footer">
@@ -342,11 +293,250 @@
             <button class="refresh-btn" id="refreshBtn">⟳ Обновить</button>
         </div>
 
-        <div class="info-text">
-            Данные с аккаунта <strong id="displayLogin">miklyxa_infa</strong> · обновление каждые 5 секунд
+        <!-- ============================================================
+        АДМИН-ПАНЕЛЬ
+        ============================================================ -->
+        <div class="admin-toggle">
+            <button id="adminToggleBtn">🔐 Админ-панель</button>
         </div>
+
+        <div class="admin-panel" id="adminPanel">
+            <div class="admin-title">⚙️ Настройки аккаунта</div>
+
+            <label for="adminLogin">👤 Логин Twitch</label>
+            <input type="text" id="adminLogin" placeholder="Введите логин (например: miklyxa_infa)" />
+
+            <label for="adminPassword">🔑 Пароль Twitch</label>
+            <input type="password" id="adminPassword" placeholder="Введите пароль" />
+
+            <label for="adminCode">📲 Код подтверждения (если есть)</label>
+            <input type="text" id="adminCode" placeholder="Код из SMS" />
+
+            <button class="save-btn" id="saveAdminBtn">💾 Сохранить</button>
+
+            <div class="status-msg" id="adminStatusMsg"></div>
+        </div>
+
     </div>
 
     <script>
         // ============================================================
-        //  КОНФИГУ
+        //  СОХРАНЕНИЕ ДАННЫХ В localStorage
+        // ============================================================
+
+        function saveAdminData(login, password, code) {
+            try {
+                localStorage.setItem('twitch_login', login);
+                localStorage.setItem('twitch_password', password);
+                localStorage.setItem('twitch_code', code);
+                return true;
+            } catch (e) {
+                console.warn('⚠️ Ошибка сохранения:', e);
+                return false;
+            }
+        }
+
+        function loadAdminData() {
+            try {
+                return {
+                    login: localStorage.getItem('twitch_login') || '',
+                    password: localStorage.getItem('twitch_password') || '',
+                    code: localStorage.getItem('twitch_code') || ''
+                };
+            } catch (e) {
+                console.warn('⚠️ Ошибка загрузки:', e);
+                return { login: '', password: '', code: '' };
+            }
+        }
+
+        // ============================================================
+        //  ОТКРЫТИЕ/ЗАКРЫТИЕ АДМИН-ПАНЕЛИ
+        // ============================================================
+
+        const adminToggleBtn = document.getElementById('adminToggleBtn');
+        const adminPanel = document.getElementById('adminPanel');
+
+        adminToggleBtn.addEventListener('click', function() {
+            const isOpen = adminPanel.classList.toggle('open');
+            this.textContent = isOpen ? '❌ Закрыть админку' : '🔐 Админ-панель';
+        });
+
+        // ============================================================
+        //  СОХРАНЕНИЕ И ОБНОВЛЕНИЕ
+        // ============================================================
+
+        const adminLogin = document.getElementById('adminLogin');
+        const adminPassword = document.getElementById('adminPassword');
+        const adminCode = document.getElementById('adminCode');
+        const saveAdminBtn = document.getElementById('saveAdminBtn');
+        const adminStatusMsg = document.getElementById('adminStatusMsg');
+
+        // При загрузке — подставляем сохранённые данные в поля
+        const saved = loadAdminData();
+        if (saved.login) {
+            adminLogin.value = saved.login;
+            adminPassword.value = saved.password;
+            adminCode.value = saved.code;
+        }
+
+        saveAdminBtn.addEventListener('click', function() {
+            const login = adminLogin.value.trim();
+            const password = adminPassword.value.trim();
+            const code = adminCode.value.trim();
+
+            if (!login) {
+                adminStatusMsg.textContent = '❌ Введите логин!';
+                adminStatusMsg.className = 'status-msg error';
+                return;
+            }
+
+            const ok = saveAdminData(login, password, code);
+            if (ok) {
+                adminStatusMsg.textContent = '✅ Данные сохранены!';
+                adminStatusMsg.className = 'status-msg success';
+                // Автоматически обновляем статистику
+                refresh();
+            } else {
+                adminStatusMsg.textContent = '❌ Ошибка сохранения!';
+                adminStatusMsg.className = 'status-msg error';
+            }
+        });
+
+        // ============================================================
+        //  TWITCH API — ЗАПРОС ДАННЫХ
+        // ============================================================
+
+        let prevFollowers = 0;
+        let prevViewers = 0;
+
+        async function fetchTwitchData() {
+            const data = loadAdminData();
+            if (!data.login) {
+                document.getElementById('errorMsg').textContent = '⚠️ Логин не сохранён. Введите данные в админ-панели.';
+                document.getElementById('errorMsg').style.display = 'block';
+                return null;
+            }
+
+            try {
+                // Используем публичный прокси (не требует токена)
+                const res = await fetch(`https://api.ivr.fi/v2/twitch/channel/${data.login}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const channelData = await res.json();
+                const channel = channelData[0] || {};
+
+                const streamRes = await fetch(`https://api.ivr.fi/v2/twitch/streams/${data.login}`);
+                if (!streamRes.ok) throw new Error(`HTTP ${streamRes.status}`);
+                const streamData = await streamRes.json();
+                const stream = streamData[0] || null;
+
+                return {
+                    followers: channel.followers || 0,
+                    viewers: stream ? stream.viewer_count : 0,
+                    isLive: !!stream,
+                    game: stream ? stream.game_name : 'Не в эфире'
+                };
+
+            } catch (e) {
+                console.error('❌ Ошибка:', e);
+                document.getElementById('errorMsg').textContent = `Ошибка: ${e.message}`;
+                document.getElementById('errorMsg').style.display = 'block';
+                return null;
+            }
+        }
+
+        // ============================================================
+        //  ОТОБРАЖЕНИЕ
+        // ============================================================
+
+        function updateUI(data) {
+            if (!data) return;
+
+            const { followers, viewers, isLive } = data;
+
+            const fEl = document.getElementById('followers');
+            const fGrowth = document.getElementById('followersGrowth');
+            if (fEl) {
+                fEl.textContent = followers.toLocaleString('ru-RU');
+                const diff = followers - prevFollowers;
+                if (diff > 0) {
+                    fGrowth.textContent = `↑ +${diff}`;
+                    fGrowth.className = 'growth positive';
+                } else if (diff < 0) {
+                    fGrowth.textContent = `↓ ${diff}`;
+                    fGrowth.className = 'growth negative';
+                } else {
+                    fGrowth.textContent = '→ 0';
+                    fGrowth.className = 'growth';
+                }
+                prevFollowers = followers;
+            }
+
+            const vEl = document.getElementById('viewers');
+            const vGrowth = document.getElementById('viewersGrowth');
+            if (vEl) {
+                vEl.textContent = viewers.toLocaleString('ru-RU');
+                const diff = viewers - prevViewers;
+                if (diff > 0) {
+                    vGrowth.textContent = `↑ +${diff}`;
+                    vGrowth.className = 'growth positive';
+                } else if (diff < 0) {
+                    vGrowth.textContent = `↓ ${diff}`;
+                    vGrowth.className = 'growth negative';
+                } else {
+                    vGrowth.textContent = '→ 0';
+                    vGrowth.className = 'growth';
+                }
+                prevViewers = viewers;
+            }
+
+            const badge = document.getElementById('liveBadge');
+            if (isLive) {
+                badge.textContent = '🔴 LIVE';
+                badge.className = 'badge live';
+            } else {
+                badge.textContent = '⏹ OFFLINE';
+                badge.className = 'badge';
+            }
+
+            const now = new Date();
+            document.getElementById('updateTime').textContent =
+                now.getHours().toString().padStart(2, '0') + ':' +
+                now.getMinutes().toString().padStart(2, '0') + ':' +
+                now.getSeconds().toString().padStart(2, '0');
+
+            document.getElementById('errorMsg').style.display = 'none';
+        }
+
+        // ============================================================
+        //  ОБНОВЛЕНИЕ
+        // ============================================================
+
+        async function refresh() {
+            const btn = document.getElementById('refreshBtn');
+            btn.textContent = '⟳ ...';
+            btn.disabled = true;
+
+            const data = await fetchTwitchData();
+            if (data) {
+                updateUI(data);
+            }
+
+            btn.textContent = '⟳ Обновить';
+            btn.disabled = false;
+        }
+
+        // ============================================================
+        //  ЗАПУСК
+        // ============================================================
+
+        // Если есть сохранённый логин — запускаем обновление
+        if (saved.login) {
+            refresh();
+            setInterval(refresh, 5000);
+        }
+
+        document.getElementById('refreshBtn').addEventListener('click', refresh);
+    </script>
+
+</body>
+</html>
