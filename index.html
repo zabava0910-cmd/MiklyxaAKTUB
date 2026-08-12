@@ -119,108 +119,6 @@
         .stat .growth.positive { color: #34d399; }
         .stat .growth.negative { color: #f87171; }
 
-        /* ============================================================
-           АДМИН-ПАНЕЛЬ
-           ============================================================ */
-        .admin-toggle {
-            margin-top: 16px;
-            text-align: center;
-        }
-
-        .admin-toggle button {
-            background: #2a2a3e;
-            border: 1px solid #3a3a4e;
-            color: #c0c0d0;
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .admin-toggle button:hover {
-            background: #3a3a4e;
-            border-color: #7c3aed;
-            color: #f0ecf5;
-        }
-
-        .admin-panel {
-            margin-top: 18px;
-            padding: 20px;
-            background: #1a1a2a;
-            border-radius: 18px;
-            border: 1px solid #2a2a3e;
-            display: none;
-        }
-
-        .admin-panel.open {
-            display: block;
-        }
-
-        .admin-panel .admin-title {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 14px;
-            color: #a855f7;
-            text-align: center;
-        }
-
-        .admin-panel label {
-            display: block;
-            font-size: 12px;
-            color: #8a8a9a;
-            margin-top: 12px;
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-
-        .admin-panel input {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid #2a2a3e;
-            background: #0a0a0f;
-            color: #f0ecf5;
-            font-size: 14px;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .admin-panel input:focus {
-            border-color: #7c3aed;
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.1);
-        }
-
-        .admin-panel .save-btn {
-            width: 100%;
-            padding: 12px;
-            margin-top: 18px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #7c3aed, #a855f7);
-            color: #fff;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .admin-panel .save-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
-        }
-
-        .admin-panel .status-msg {
-            margin-top: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .admin-panel .status-msg.success { color: #34d399; }
-        .admin-panel .status-msg.error { color: #f87171; }
-
         /* ===== ФУТЕР ===== */
         .footer {
             margin-top: 20px;
@@ -295,158 +193,74 @@
             <button class="refresh-btn" id="refreshBtn">⟳ Обновить</button>
         </div>
 
-        <!-- ============================================================
-        АДМИН-ПАНЕЛЬ
-        ============================================================ -->
-        <div class="admin-toggle">
-            <button id="adminToggleBtn">🔐 Админ-панель</button>
+        <div style="text-align:center;margin-top:12px;font-size:11px;color:#5a5a6a;border-top:1px solid #1f1f35;padding-top:12px;">
+            Канал: <strong style="color:#a855f7;">miklyxashow</strong> · Авторизация: <strong style="color:#a855f7;">oleg1992g</strong>
         </div>
-
-        <div class="admin-panel" id="adminPanel">
-            <div class="admin-title">⚙️ Настройки аккаунта</div>
-
-            <label for="adminLogin">👤 Логин Twitch</label>
-            <input type="text" id="adminLogin" placeholder="Введите логин (например: miklyxa_infa)" />
-
-            <label for="adminPassword">🔑 Пароль Twitch</label>
-            <input type="password" id="adminPassword" placeholder="Введите пароль" />
-
-            <label for="adminCode">📲 Код подтверждения (если есть)</label>
-            <input type="text" id="adminCode" placeholder="Код из SMS" />
-
-            <button class="save-btn" id="saveAdminBtn">💾 Сохранить</button>
-
-            <div class="status-msg" id="adminStatusMsg"></div>
-        </div>
-
     </div>
 
     <script>
         // ============================================================
-        //  СОХРАНЕНИЕ ДАННЫХ В localStorage
+        //  КОНФИГУРАЦИЯ
+        // ============================================================
+        const CONFIG = {
+            // КАНАЛ, с которого берём статистику
+            channel: 'miklyxashow',
+            // ЛОГИН для авторизации в API (oleg1992g)
+            login: 'oleg1992g'
+        };
+
+        // ============================================================
+        //  СОХРАНЕНИЕ В localStorage (для авто-входа)
         // ============================================================
 
-        function saveAdminData(login, password, code) {
+        function autoLogin() {
             try {
-                localStorage.setItem('twitch_login', login);
-                localStorage.setItem('twitch_password', password);
-                localStorage.setItem('twitch_code', code);
+                localStorage.setItem('twitch_login', CONFIG.login);
+                localStorage.setItem('twitch_channel', CONFIG.channel);
                 return true;
             } catch (e) {
-                console.warn('⚠️ Ошибка сохранения:', e);
+                console.warn('⚠️ Ошибка авто-входа:', e);
                 return false;
             }
         }
 
-        function loadAdminData() {
+        function getSavedChannel() {
             try {
-                return {
-                    login: localStorage.getItem('twitch_login') || '',
-                    password: localStorage.getItem('twitch_password') || '',
-                    code: localStorage.getItem('twitch_code') || ''
-                };
+                return localStorage.getItem('twitch_channel') || CONFIG.channel;
             } catch (e) {
                 console.warn('⚠️ Ошибка загрузки:', e);
-                return { login: '', password: '', code: '' };
+                return CONFIG.channel;
             }
         }
 
-        // ============================================================
-        //  ОТКРЫТИЕ/ЗАКРЫТИЕ АДМИН-ПАНЕЛИ
-        // ============================================================
-
-        const adminToggleBtn = document.getElementById('adminToggleBtn');
-        const adminPanel = document.getElementById('adminPanel');
-
-        // Проверяем, что элементы существуют
-        console.log('🔐 adminToggleBtn:', adminToggleBtn);
-        console.log('🔐 adminPanel:', adminPanel);
-
-        if (adminToggleBtn) {
-            adminToggleBtn.addEventListener('click', function() {
-                console.log('🔐 Кнопка нажата!');
-                const isOpen = adminPanel.classList.toggle('open');
-                this.textContent = isOpen ? '❌ Закрыть админку' : '🔐 Админ-панель';
-                console.log('🔐 Панель открыта:', isOpen);
-            });
-        } else {
-            console.error('❌ Кнопка adminToggleBtn не найдена!');
-        }
+        // Выполняем авто-вход
+        autoLogin();
 
         // ============================================================
-        //  СОХРАНЕНИЕ И ОБНОВЛЕНИЕ
-        // ============================================================
-
-        const adminLogin = document.getElementById('adminLogin');
-        const adminPassword = document.getElementById('adminPassword');
-        const adminCode = document.getElementById('adminCode');
-        const saveAdminBtn = document.getElementById('saveAdminBtn');
-        const adminStatusMsg = document.getElementById('adminStatusMsg');
-
-        // При загрузке — подставляем сохранённые данные в поля
-        const saved = loadAdminData();
-        if (saved.login) {
-            adminLogin.value = saved.login;
-            adminPassword.value = saved.password;
-            adminCode.value = saved.code;
-        }
-
-        if (saveAdminBtn) {
-            saveAdminBtn.addEventListener('click', function() {
-                const login = adminLogin.value.trim();
-                const password = adminPassword.value.trim();
-                const code = adminCode.value.trim();
-
-                if (!login) {
-                    adminStatusMsg.textContent = '❌ Введите логин!';
-                    adminStatusMsg.className = 'status-msg error';
-                    return;
-                }
-
-                const ok = saveAdminData(login, password, code);
-                if (ok) {
-                    adminStatusMsg.textContent = '✅ Данные сохранены!';
-                    adminStatusMsg.className = 'status-msg success';
-                    // Автоматически обновляем статистику
-                    refresh();
-                } else {
-                    adminStatusMsg.textContent = '❌ Ошибка сохранения!';
-                    adminStatusMsg.className = 'status-msg error';
-                }
-            });
-        } else {
-            console.error('❌ Кнопка saveAdminBtn не найдена!');
-        }
-
-        // ============================================================
-        //  TWITCH API — ЗАПРОС ДАННЫХ
+        //  TWITCH API — ЗАПРОС ДАННЫХ С КАНАЛА miklyxashow
         // ============================================================
 
         let prevFollowers = 0;
         let prevViewers = 0;
 
         async function fetchTwitchData() {
-            const data = loadAdminData();
-            if (!data.login) {
-                document.getElementById('errorMsg').textContent = '⚠️ Логин не сохранён. Введите данные в админ-панели.';
-                document.getElementById('errorMsg').style.display = 'block';
-                return null;
-            }
+            const channel = getSavedChannel();
 
             try {
-                // Используем публичный прокси (не требует токена)
-                const res = await fetch(`https://api.ivr.fi/v2/twitch/channel/${data.login}`);
+                // 1. Получаем данные канала (фолловеры)
+                const res = await fetch(`https://api.ivr.fi/v2/twitch/channel/${channel}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const channelData = await res.json();
-                const channel = channelData[0] || {};
+                const ch = channelData[0] || {};
 
-                const streamRes = await fetch(`https://api.ivr.fi/v2/twitch/streams/${data.login}`);
+                // 2. Получаем стрим (зрители, статус)
+                const streamRes = await fetch(`https://api.ivr.fi/v2/twitch/streams/${channel}`);
                 if (!streamRes.ok) throw new Error(`HTTP ${streamRes.status}`);
                 const streamData = await streamRes.json();
                 const stream = streamData[0] || null;
 
                 return {
-                    followers: channel.followers || 0,
+                    followers: ch.followers || 0,
                     viewers: stream ? stream.viewer_count : 0,
                     isLive: !!stream,
                     game: stream ? stream.game_name : 'Не в эфире'
@@ -545,16 +359,11 @@
         //  ЗАПУСК
         // ============================================================
 
-        // Если есть сохранённый логин — запускаем обновление
-        if (saved.login) {
-            refresh();
-            setInterval(refresh, 5000);
-        }
+        // Запускаем обновление сразу
+        refresh();
+        setInterval(refresh, 5000);
 
         document.getElementById('refreshBtn').addEventListener('click', refresh);
-
-        console.log('✅ Сайт загружен!');
-        console.log('📦 Сохранённые данные:', saved);
     </script>
 
 </body>
