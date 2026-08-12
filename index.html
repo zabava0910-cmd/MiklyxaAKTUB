@@ -1,1 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Miklyxa Show — Статистика</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #f0ecf5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: #12121e;
+            border: 1px solid #1f1f35;
+            border-radius: 28px;
+            padding: 30px 34px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            border-color: #7c3aed;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 30%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            background: #2a2a3a;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #a0a0b0;
+        }
+
+        .badge.live {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: #fff;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 18px 0;
+        }
+
+        .stat {
+            background: #1a1a2a;
+            border-radius: 18px;
+            padding: 20px 16px;
+            text-align: center;
+            border: 1px solid #2a2a3e;
+            transition: 0.2s;
+        }
+
+        .stat:hover {
+            border-color: #7c3aed;
+            transform: scale(1.02);
+        }
+
+        .stat .number {
+            font-size: 34px;
+            font-weight: 700;
+            color: #a855f7;
+        }
+
+        .stat .label {
+            font-size: 13px;
+            color: #8a8a9a;
+            margin-top: 4px;
+        }
+
+        .stat .growth {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .stat .growth.positive { color: #34d399; }
+        .stat .growth.negative { color: #f87171; }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #5a5a6a;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #1f1f35;
+            padding-top: 16px;
+        }
+
+        .footer .refresh-btn {
+            background: #2a2a3e;
+            border: none;
+            color: #c0c0d0;
+            padding: 4px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .footer .refresh-btn:hover {
+            background: #7c3aed;
+            color: #fff;
+        }
+
+        .error {
+            color: #f87171;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .info-line {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 11px;
+            color: #5a5a6a;
+            border-top: 1px solid #1f1f35;
+            padding-top: 12px;
+        }
+
+        .info-line strong {
+            color: #a855f7;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 20px 16px; }
+            .stat .number { font-size: 28px; }
+            .stats { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="header">
+            <h1>🎮 Miklyxa Show</h1>
+            <span class="badge" id="liveBadge">⏹ OFFLINE</span>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="number" id="followers">0</div>
+                <div class="label">👥 Фолловеры</div>
+                <div class="growth" id="followersGrowth">+0</div>
+            </div>
+            <div class="stat">
+                <div class="number" id="viewers">0</div>
+                <div class="label">👁️ Зрители</div>
+                <div class="growth" id="viewersGrowth">+0</div>
+            </div>
+        </div>
+
+        <div class="error" id="errorMsg">⚠️ Ошибка загрузки данных</div>
+
+        <div class="footer">
+            <span>🔄 обновлено: <span id="updateTime">—</span></span>
+            <button class="refresh-btn" id="refreshBtn">⟳ Обновить</button>
+        </div>
+
+        <div class="info-line">
+            Канал: <strong>miklyxashow</strong> · Авторизация: <strong>oleg1992g</strong>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  КОНФИГУРАЦИЯ
+        // ============================================================
+        const CHANNEL = 'miklyxashow';
+        const LOGIN = 'oleg1992g';
+
+        // ============================================================
+        //  ПРЯМОЙ ПАРСИНГ СТРАНИЦЫ TWITCH
+        // ============================================================
+
+        let prevFollowers = 0;
+        let prevViewers = 0;
+
+        async function fetchTwitchData() {
+            try {
+                // 1. Запрашиваем страницу канала
+                const res = await fetch(`https://twitch.tv/${CHANNEL}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status} — страница не загружена`);
+
+                const html = await res.text();
+
+                // 2. Ищем фолловеров
+                let followers = 0;
+                const fMatch = html.match(/"followers":\s*(\d+)/);
+                if (fMatch) {
+                    followers = parseInt(fMatch[1]) || 0;
+                } else {
+                    const altMatch = html.match(/([\d,]+)\s+(?:followers|subscribers)/i);
+                    if (altMatch) {
+                        followers = parseInt(altMatch[1].replace(/,/g, '')) || 0;
+                    }
+                }
+
+                // 3. Ищем зрителей
+                let viewers = 0;
+                const vMatch = html.match(/"viewer_count":\s*(\d+)/);
+                if (vMatch) {
+                    viewers = parseInt(vMatch[1]) || 0;
+                }
+
+                // 4. Ищем LIVE статус
+                let isLive = html.includes('"is_live":true') ||
+                             html.includes('isLive":true') ||
+                             html.includes('"type":"live"');
+
+                // 5. Ищем название игры
+                let game = 'Не в эфире';
+                const gMatch = html.match(/"game_name":"([^"]+)"/);
+                if (gMatch) {
+                    game = gMatch[1];
+                }
+
+                // Если стрим идёт, но зрители не найдены — ставим 0
+                if (isLive && viewers === 0) {
+                    viewers = 0;
+                }
+
+                return { followers, viewers, isLive, game };
+
+            } catch (e) {
+                console.error('❌ Ошибка парсинга:', e);
+                document.getElementById('errorMsg').textContent = `Ошибка: ${e.message}`;
+                document.getElementById('errorMsg').style.display = 'block';
+                return null;
+            }
+        }
+
+        // ============================================================
+        //  ОТОБРАЖЕНИЕ
+        // ============================================================
+
+        function updateUI(data) {
+            if (!data) return;
+
+            const { followers, viewers, isLive, game } = data;
+
+            // Фолловеры
+            const fEl = document.getElementById('followers');
+            const fGrowth = document.getElementById('followersGrowth');
+            if (fEl) {
+                fEl.textContent = followers.toLocaleString('ru-RU');
+                const diff = followers - prevFollowers;
+                if (diff > 0) {
+                    fGrowth.textContent = `↑ +${diff}`;
+                    fGrowth.className = 'growth positive';
+                } else if (diff < 0) {
+                    fGrowth.textContent = `↓ ${diff}`;
+                    fGrowth.className = 'growth negative';
+                } else {
+                    fGrowth.textContent = '→ 0';
+                    fGrowth.className = 'growth';
+                }
+                prevFollowers = followers;
+            }
+
+            // Зрители
+            const vEl = document.getElementById('viewers');
+            const vGrowth = document.getElementById('viewersGrowth');
+            if (vEl) {
+                vEl.textContent = viewers.toLocaleString('ru-RU');
+                const diff = viewers - prevViewers;
+                if (diff > 0) {
+                    vGrowth.textContent = `↑ +${diff}`;
+                    vGrowth.className = 'growth positive';
+                } else if (diff < 0) {
+                    vGrowth.textContent = `↓ ${diff}`;
+                    vGrowth.className = 'growth negative';
+                } else {
+                    vGrowth.textContent = '→ 0';
+                    vGrowth.className = 'growth';
+                }
+                prevViewers = viewers;
+            }
+
+            // LIVE-бейдж
+            const badge = document.getElementById('liveBadge');
+            if (isLive) {
+                badge.textContent = '🔴 LIVE';
+                badge.className = 'badge live';
+            } else {
+                badge.textContent = '⏹ OFFLINE';
+                badge.className = 'badge';
+            }
+
+            // Время
+            const now = new Date();
+            document.getElementById('updateTime').textContent =
+                now.getHours().toString().padStart(2, '0') + ':' +
+                now.getMinutes().toString().padStart(2, '0') + ':' +
+                now.getSeconds().toString().padStart(2, '0');
+
+            document.getElementById('errorMsg').style.display = 'none';
+
+            // Логируем для отладки
+            console.log('📊 Данные:', { followers, viewers, isLive, game });
+        }
+
+        // ============================================================
+        //  ОБНОВЛЕНИЕ
+        // ============================================================
+
+        async function refresh() {
+            const btn = document.getElementById('refreshBtn');
+            btn.textContent = '⟳ ...';
+            btn.disabled = true;
+
+            const data = await fetchTwitchData();
+            if (data) {
+                updateUI(data);
+            }
+
+            btn.textContent = '⟳ Обновить';
+            btn.disabled = false;
+        }
+
+        // ============================================================
+        //  ЗАПУСК
+        // ============================================================
+
+        refresh();
+        setInterval(refresh, 5000);
+
+        document.getElementById('refreshBtn').addEventListener('click', refresh);
+    </script>
+
+</body>
+</html>
