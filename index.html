@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Miklyxa Show — Статистика</title>
     <style>
+        /* ============================================================
+           СТИЛИ
+           ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -197,7 +200,7 @@
         </div>
 
         <div class="info-line">
-            Канал: <strong>miklyxashow</strong> · Авторизация: <strong>oleg1992g</strong>
+            Канал: <strong>miklyxashow</strong> · обновление каждые <strong>3 секунды</strong>
         </div>
     </div>
 
@@ -206,10 +209,10 @@
         //  КОНФИГУРАЦИЯ
         // ============================================================
         const CHANNEL = 'miklyxashow';
-        const LOGIN = 'oleg1992g';
+        const CLIENT_ID = 'kimne78kx3ncx6brgo4mv6gki99h1na';
 
         // ============================================================
-        //  ПРЯМОЙ ПАРСИНГ СТРАНИЦЫ TWITCH
+        //  ПОЛУЧЕНИЕ ДАННЫХ
         // ============================================================
 
         let prevFollowers = 0;
@@ -217,52 +220,42 @@
 
         async function fetchTwitchData() {
             try {
-                // 1. Запрашиваем страницу канала
-                const res = await fetch(`https://twitch.tv/${CHANNEL}`);
-                if (!res.ok) throw new Error(`HTTP ${res.status} — страница не загружена`);
+                // 1. Получаем ID канала
+                const userRes = await fetch(
+                    `https://api.twitch.tv/helix/users?login=${CHANNEL}`,
+                    { headers: { 'Client-ID': CLIENT_ID } }
+                );
+                if (!userRes.ok) throw new Error(`Ошибка пользователя: ${userRes.status}`);
+                const userData = await userRes.json();
+                const userId = userData.data?.[0]?.id;
+                if (!userId) throw new Error('ID канала не найден');
 
-                const html = await res.text();
+                // 2. Получаем фолловеров (публичные данные)
+                const followRes = await fetch(
+                    `https://api.twitch.tv/helix/channels/followers?broadcaster_id=${userId}&first=1`,
+                    { headers: { 'Client-ID': CLIENT_ID } }
+                );
+                if (!followRes.ok) throw new Error(`Ошибка подписчиков: ${followRes.status}`);
+                const followData = await followRes.json();
+                const followers = followData.total || 0;
 
-                // 2. Ищем фолловеров
-                let followers = 0;
-                const fMatch = html.match(/"followers":\s*(\d+)/);
-                if (fMatch) {
-                    followers = parseInt(fMatch[1]) || 0;
-                } else {
-                    const altMatch = html.match(/([\d,]+)\s+(?:followers|subscribers)/i);
-                    if (altMatch) {
-                        followers = parseInt(altMatch[1].replace(/,/g, '')) || 0;
-                    }
-                }
+                // 3. Получаем стрим и зрителей
+                const streamRes = await fetch(
+                    `https://api.twitch.tv/helix/streams?user_login=${CHANNEL}`,
+                    { headers: { 'Client-ID': CLIENT_ID } }
+                );
+                if (!streamRes.ok) throw new Error(`Ошибка стрима: ${streamRes.status}`);
+                const streamData = await streamRes.json();
+                const stream = streamData.data?.[0] || null;
 
-                // 3. Ищем зрителей
-                let viewers = 0;
-                const vMatch = html.match(/"viewer_count":\s*(\d+)/);
-                if (vMatch) {
-                    viewers = parseInt(vMatch[1]) || 0;
-                }
-
-                // 4. Ищем LIVE статус
-                let isLive = html.includes('"is_live":true') ||
-                             html.includes('isLive":true') ||
-                             html.includes('"type":"live"');
-
-                // 5. Ищем название игры
-                let game = 'Не в эфире';
-                const gMatch = html.match(/"game_name":"([^"]+)"/);
-                if (gMatch) {
-                    game = gMatch[1];
-                }
-
-                // Если стрим идёт, но зрители не найдены — ставим 0
-                if (isLive && viewers === 0) {
-                    viewers = 0;
-                }
+                const viewers = stream ? stream.viewer_count : 0;
+                const isLive = !!stream;
+                const game = stream ? stream.game_name : 'Не в эфире';
 
                 return { followers, viewers, isLive, game };
 
             } catch (e) {
-                console.error('❌ Ошибка парсинга:', e);
+                console.error('❌ Ошибка:', e);
                 document.getElementById('errorMsg').textContent = `Ошибка: ${e.message}`;
                 document.getElementById('errorMsg').style.display = 'block';
                 return null;
@@ -276,7 +269,7 @@
         function updateUI(data) {
             if (!data) return;
 
-            const { followers, viewers, isLive, game } = data;
+            const { followers, viewers, isLive } = data;
 
             // Фолловеры
             const fEl = document.getElementById('followers');
@@ -334,9 +327,6 @@
                 now.getSeconds().toString().padStart(2, '0');
 
             document.getElementById('errorMsg').style.display = 'none';
-
-            // Логируем для отладки
-            console.log('📊 Данные:', { followers, viewers, isLive, game });
         }
 
         // ============================================================
@@ -358,11 +348,11 @@
         }
 
         // ============================================================
-        //  ЗАПУСК
+        //  ЗАПУСК (ОБНОВЛЕНИЕ КАЖДЫЕ 3 СЕКУНДЫ)
         // ============================================================
 
         refresh();
-        setInterval(refresh, 5000);
+        setInterval(refresh, 3000); // ← каждые 3 секунды
 
         document.getElementById('refreshBtn').addEventListener('click', refresh);
     </script>
